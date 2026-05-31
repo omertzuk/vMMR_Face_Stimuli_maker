@@ -1,0 +1,15 @@
+numpy
+scipy
+opencv-python
+scikit-image
+pillow
+matplotlib
+pandas
+pyyaml
+tqdm
+mediapipe
+
+# Optional heavy fallback detector — comment out if not needed
+# face-alignment
+# torch
+# torchvision

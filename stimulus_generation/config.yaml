@@ -1,0 +1,37 @@
+# Face-stimuli pipeline configuration
+# CLI flags override these defaults.
+
+output:
+  size: [425, 405]          # [width, height] of every output image
+  dtype: uint8
+
+landmarks:
+  method: mediapipe         # "mediapipe" | "fan"
+  manual_landmarks: false   # if true, load landmarks from JSON instead of detecting
+
+alignment:
+  interocular_distance: 140   # pixels between eye centres in the aligned frame
+  eye_centre_y: 160           # vertical position (from top) of eye midpoint
+
+mask:
+  # Oval face mask — proportions of (height, width) of the output frame
+  height_fraction: 0.95
+  width_fraction: 0.80
+
+shine:
+  spectrum: sf              # "sf" (recommended for faces) | "spec"
+  iterations: 10
+  tolerance: 1e-4           # early-stop delta threshold for hist+spec RMSE
+  rescale_mode: all_in_range  # "all_in_range" | "avg_clip"
+  match_population: triplet # "triplet" (per-participant) | "set" (all subjects)
+  do_hist: true
+
+sunglasses:
+  lens_scale: 1.6           # width multiplier relative to eye width
+  lens_height_frac: 0.55    # lens height as fraction of lens width
+  bridge_height: 6          # bridge thickness in pixels
+
+pipeline:
+  save_intermediates: false
+  overwrite: false
+  qc_only: false
