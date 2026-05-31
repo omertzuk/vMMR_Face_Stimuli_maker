@@ -17,3 +17,4 @@ stimulus_generation/tests/__pycache__/test_shine.cpython-310-pytest-9.0.3.pyc
 stimulus_generation/raw_faces/*.*
 stimulus_generation/raw_faces/sub-001/Other.jpg
 stimulus_generation/raw_faces/sub-001/Self.jpg
+stimulus_generation/outputs/sub-001/

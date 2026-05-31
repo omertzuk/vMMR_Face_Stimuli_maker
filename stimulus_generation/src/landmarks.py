@@ -121,6 +121,13 @@ _MP_RIGHT_EYE_IDXS = [
     466, 388, 387, 386, 385, 384, 398,
 ]
 
+# URL for the face landmarker model required by MediaPipe >= 0.10 Tasks API
+_MP_MODEL_URL = (
+    "https://storage.googleapis.com/mediapipe-models/"
+    "face_landmarker/face_landmarker/float16/1/face_landmarker.task"
+)
+_MP_MODEL_PATH = Path(__file__).parent / "face_landmarker.task"
+
 
 def _detect_mediapipe(img_bgr: NDArray[np.uint8]) -> NDArray[np.float32]:
     try:
@@ -131,13 +138,26 @@ def _detect_mediapipe(img_bgr: NDArray[np.uint8]) -> NDArray[np.float32]:
             "Install it with: pip install mediapipe"
         ) from exc
 
-    mp_face_mesh = mp.solutions.face_mesh
     H, W = img_bgr.shape[:2]
     img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
 
+    # MediaPipe 0.10+ removed mp.solutions in favour of the Tasks API.
+    if hasattr(mp, "solutions"):
+        return _detect_mediapipe_solutions(img_rgb, H, W, mp)
+    else:
+        return _detect_mediapipe_tasks(img_rgb, H, W, mp)
+
+
+def _detect_mediapipe_solutions(
+    img_rgb: NDArray[np.uint8],
+    H: int,
+    W: int,
+    mp,
+) -> NDArray[np.float32]:
+    mp_face_mesh = mp.solutions.face_mesh
     with mp_face_mesh.FaceMesh(
         static_image_mode=True,
-        max_num_faces=2,       # detect up to 2 so we can error on >1
+        max_num_faces=2,
         min_detection_confidence=0.5,
         refine_landmarks=True,
     ) as face_mesh:
@@ -156,7 +176,49 @@ def _detect_mediapipe(img_bgr: NDArray[np.uint8]) -> NDArray[np.float32]:
         [[lm.x * W, lm.y * H] for lm in face.landmark],
         dtype=np.float32,
     )
-    logger.debug("MediaPipe: detected %d landmarks", len(pts))
+    logger.debug("MediaPipe (solutions): detected %d landmarks", len(pts))
+    return pts
+
+
+def _detect_mediapipe_tasks(
+    img_rgb: NDArray[np.uint8],
+    H: int,
+    W: int,
+    mp,
+) -> NDArray[np.float32]:
+    """Use the MediaPipe Tasks API (mediapipe >= 0.10)."""
+    from mediapipe.tasks import python as mp_python
+    from mediapipe.tasks.python import vision as mp_vision
+
+    if not _MP_MODEL_PATH.exists():
+        import urllib.request
+        logger.info(
+            "Downloading MediaPipe face landmarker model to %s ...",
+            _MP_MODEL_PATH,
+        )
+        urllib.request.urlretrieve(_MP_MODEL_URL, _MP_MODEL_PATH)
+        logger.info("Download complete.")
+
+    base_options = mp_python.BaseOptions(model_asset_path=str(_MP_MODEL_PATH))
+    options = mp_vision.FaceLandmarkerOptions(
+        base_options=base_options,
+        num_faces=2,
+    )
+    with mp_vision.FaceLandmarker.create_from_options(options) as detector:
+        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=img_rgb)
+        result = detector.detect(mp_image)
+
+    if not result.face_landmarks:
+        raise ValueError("No face detected in the image.")
+    if len(result.face_landmarks) > 1:
+        raise ValueError(
+            f"Expected exactly 1 face, found {len(result.face_landmarks)}. "
+            "Crop the image so only one face is visible."
+        )
+
+    face = result.face_landmarks[0]
+    pts = np.array([[lm.x * W, lm.y * H] for lm in face], dtype=np.float32)
+    logger.debug("MediaPipe (tasks): detected %d landmarks", len(pts))
     return pts
 
 
@@ -178,6 +240,16 @@ _FAN_RIGHT_EYE_IDXS = list(range(42, 48))  # right eye corners + lids
 
 
 def _detect_fan(img_bgr: NDArray[np.uint8]) -> NDArray[np.float32]:
+    # Disable torch dynamo/compile before importing face_alignment so that
+    # PyTorch 2.x does not try to invoke cl.exe (MSVC) on Windows.
+    import os
+    os.environ.setdefault("TORCHDYNAMO_DISABLE", "1")
+    try:
+        import torch._dynamo as _dynamo
+        _dynamo.config.suppress_errors = True
+    except Exception:
+        pass
+
     try:
         import face_alignment
     except ImportError as exc:
