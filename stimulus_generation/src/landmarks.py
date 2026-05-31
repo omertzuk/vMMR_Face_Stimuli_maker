@@ -94,11 +94,9 @@ def get_eye_centres(
 ) -> tuple[NDArray[np.float32], NDArray[np.float32]]:
     """Return (left_eye_centre, right_eye_centre) as (x, y) float32 arrays.
 
-    From the viewer's perspective:
-        left_eye  = person's right eye (higher x in standard layout)
-        right_eye = person's left eye  (lower x)
-    We follow the MediaPipe / FAN convention where left/right refer to the
-    *person's* left/right.
+    Convention (matches the alignment template in align.py):
+        left_eye  = person's LEFT eye  → higher x (viewer's right side)
+        right_eye = person's RIGHT eye → lower x  (viewer's left side)
     """
     if method == "mediapipe":
         return _eye_centres_mediapipe(landmarks)
@@ -225,8 +223,13 @@ def _detect_mediapipe_tasks(
 def _eye_centres_mediapipe(
     landmarks: NDArray[np.float32],
 ) -> tuple[NDArray[np.float32], NDArray[np.float32]]:
-    left = landmarks[_MP_LEFT_EYE_IDXS].mean(axis=0)
-    right = landmarks[_MP_RIGHT_EYE_IDXS].mean(axis=0)
+    # _MP_LEFT_EYE_IDXS (idx ~33) sits on the LEFT side of the image (person's
+    # RIGHT eye, lower x). _MP_RIGHT_EYE_IDXS (idx ~362) is on the RIGHT side
+    # (person's LEFT eye, higher x).  The alignment template places its `left`
+    # target at cx+IOD/2 (higher x = person's left), so we must match the same
+    # eye here; swapping the two groups below keeps left→left, right→right.
+    left = landmarks[_MP_RIGHT_EYE_IDXS].mean(axis=0)   # person's left eye (higher x)
+    right = landmarks[_MP_LEFT_EYE_IDXS].mean(axis=0)   # person's right eye (lower x)
     return left, right
 
 
@@ -282,6 +285,10 @@ def _detect_fan(img_bgr: NDArray[np.uint8]) -> NDArray[np.float32]:
 def _eye_centres_fan(
     landmarks: NDArray[np.float32],
 ) -> tuple[NDArray[np.float32], NDArray[np.float32]]:
-    left = landmarks[_FAN_LEFT_EYE_IDXS].mean(axis=0)
-    right = landmarks[_FAN_RIGHT_EYE_IDXS].mean(axis=0)
+    # dlib/iBUG 68-pt convention: indices 36-41 are the LEFT eye from the
+    # viewer's perspective (person's RIGHT eye, lower x); 42-47 are the RIGHT
+    # eye from viewer's perspective (person's LEFT eye, higher x).  Mirror the
+    # same fix as _eye_centres_mediapipe so left=higher x, right=lower x.
+    left = landmarks[_FAN_RIGHT_EYE_IDXS].mean(axis=0)   # person's left eye (higher x)
+    right = landmarks[_FAN_LEFT_EYE_IDXS].mean(axis=0)   # person's right eye (lower x)
     return left, right
