@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 import tempfile
 from pathlib import Path
@@ -10,6 +11,8 @@ import pandas as pd
 import streamlit as st
 
 APP_TITLE = "Face Stimuli Generator"
+
+os.environ.setdefault("MEDIAPIPE_DISABLE_GPU", "1")
 
 # ---------------------------------------------------------------------------
 # Ensure stimulus_generation/ is importable
