@@ -53,6 +53,61 @@ python stimulus_generation/create_face_stimuli.py \
 
 ---
 
+## GUI (Streamlit)
+
+Launch the GUI:
+
+```bash
+streamlit run stimulus_generation/gui/app.py
+```
+
+Notes:
+
+- Single-subject mode supports file uploads or local file paths.
+- Batch mode expects a folder structure like:
+
+```text
+raw_faces/
+  sub-001/
+    self.jpg
+    other.jpg
+  sub-002/
+    self.jpg
+    other.jpg
+```
+
+- The app writes outputs under the base output directory, creating one
+  subfolder per subject.
+- Advanced settings start from config.yaml defaults and can be tuned in the UI.
+
+For Streamlit Cloud deployment and a repo-level overview, see the root
+README.md.
+
+---
+
+## Streamlit Cloud deployment
+
+If you want to host the GUI publicly:
+
+1. Push the repository to GitHub.
+2. Create a new Streamlit Cloud app for the repo.
+3. Set the **Main file path** to:
+
+```text
+stimulus_generation/gui/app.py
+```
+
+4. Use the root requirements.txt for dependencies.
+
+---
+
+## Data privacy
+
+- Local use: images are processed on your machine only.
+- Streamlit Cloud: uploaded images are processed on the Streamlit Cloud VM.
+
+---
+
 ## CLI flags
 
 | Flag | Default | Description |

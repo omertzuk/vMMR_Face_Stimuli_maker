@@ -16,7 +16,7 @@ alignment:
 mask:
   # Oval face mask — proportions of (height, width) of the output frame
   height_fraction: 0.95
-  width_fraction: 0.80
+  width_fraction: 0.7
 
 shine:
   spectrum: sf              # "sf" (recommended for faces) | "spec"

@@ -17,7 +17,7 @@ FloatImg = NDArray[np.float64]
 def create_face_mask(
     size: tuple[int, int] = (405, 425),
     height_fraction: float = 0.95,
-    width_fraction: float = 0.80,
+    width_fraction: float = 0.70,
 ) -> BoolMask:
     """Create a centred boolean oval mask.
 
