@@ -36,3 +36,6 @@ stimuli/faces/sub-001/stimuli/other_target.png
 stimuli/faces/sub-001/stimuli/other.png
 stimuli/faces/sub-001/stimuli/self_target.png
 stimuli/faces/sub-001/stimuli/self.png
+dist/
+build/
+.DS_Store

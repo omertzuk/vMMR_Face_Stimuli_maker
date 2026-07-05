@@ -17,7 +17,15 @@ os.environ.setdefault("MEDIAPIPE_DISABLE_GPU", "1")
 # ---------------------------------------------------------------------------
 # Ensure stimulus_generation/ is importable
 # ---------------------------------------------------------------------------
-ROOT_DIR = Path(__file__).resolve().parents[1]
+def get_root_dir() -> Path:
+    if hasattr(sys, "_MEIPASS"):
+        bundled_root = Path(sys._MEIPASS) / "stimulus_generation"
+        if bundled_root.exists():
+            return bundled_root
+    return Path(__file__).resolve().parents[1]
+
+
+ROOT_DIR = get_root_dir()
 REPO_ROOT = ROOT_DIR.parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))

@@ -9,6 +9,7 @@ pyyaml
 tqdm
 mediapipe
 streamlit
+streamlit-desktop-app
 
 # Optional heavy fallback detector — comment out if not needed
 # face-alignment
