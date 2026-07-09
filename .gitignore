@@ -39,3 +39,5 @@ stimuli/faces/sub-001/stimuli/self.png
 dist/
 build/
 .DS_Store
+stimuli/faces/*
+stimulus_generation/__pycache__/create_face_stimuli.cpython-313.pyc

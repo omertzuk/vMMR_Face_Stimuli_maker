@@ -14,6 +14,7 @@ python stimulus_generation/create_face_stimuli.py \\
     --other raw_faces/sub-001/other_raw.jpg \\
     --out   stimuli/faces/sub-001 \\
     --landmark-method mediapipe \\
+    --morph-alpha 0.35 \\
     --spectrum sf --iterations 10 \\
     --save-intermediates
 """
@@ -81,6 +82,8 @@ def merge_config_args(cfg: dict, args: argparse.Namespace) -> dict:
         cfg.setdefault("shine", {})["iterations"] = args.iterations
     if args.landmark_method is not None:
         cfg.setdefault("landmarks", {})["method"] = args.landmark_method
+    if args.morph_alpha is not None:
+        cfg.setdefault("morph", {})["alpha"] = args.morph_alpha
     if args.match_population is not None:
         cfg.setdefault("shine", {})["match_population"] = args.match_population
     cfg.setdefault("pipeline", {})["save_intermediates"] = args.save_intermediates
@@ -103,6 +106,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--out", required=True, help="Output directory")
 
     p.add_argument("--landmark-method", choices=["mediapipe", "fan"], default=None)
+    p.add_argument(
+        "--morph-alpha",
+        type=float,
+        default=None,
+        help="Morph blend weight: 0=self, 1=other (default: 0.5)",
+    )
     p.add_argument("--spectrum", choices=["sf", "spec"], default=None)
     p.add_argument("--iterations", type=int, default=None)
     p.add_argument(
@@ -133,6 +142,7 @@ def run_pipeline(args: argparse.Namespace, cfg: dict) -> None:
     qc_only = cfg["pipeline"]["qc_only"]
 
     lm_cfg = cfg.get("landmarks", {})
+    morph_cfg = cfg.get("morph", {})
     shine_cfg = cfg.get("shine", {})
     mask_cfg = cfg.get("mask", {})
     output_cfg = cfg.get("output", {})
@@ -201,11 +211,12 @@ def run_pipeline(args: argparse.Namespace, cfg: dict) -> None:
     # -----------------------------------------------------------------------
     # Step 5: Morph -> morph50 (pre-equalization)
     # -----------------------------------------------------------------------
-    logger.info("[5] Morphing (alpha=0.5)")
+    morph_alpha = float(morph_cfg.get("alpha", 0.5))
+    logger.info("[5] Morphing (alpha=%.3f)", morph_alpha)
     gray_morph, pts_morph = morph_pair(
         gray_self, pts_self_aligned,
         gray_other, pts_other_aligned,
-        alpha=0.5, out_size=(W, H),
+        alpha=morph_alpha, out_size=(W, H),
     )
     if save_intermediates:
         inter = ensure_output_dir(out_dir / "intermediates")
@@ -274,6 +285,7 @@ def run_pipeline(args: argparse.Namespace, cfg: dict) -> None:
         "other_image": str(args.other_img),
         "output_size": [W, H],
         "landmark_method": landmark_method,
+        "morph": morph_cfg,
         "shine": shine_cfg,
         "mask": mask_cfg,
         "alignment": align_cfg,

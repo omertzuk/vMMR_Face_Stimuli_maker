@@ -51,6 +51,23 @@ python stimulus_generation/create_face_stimuli.py \
     --save-intermediates
 ```
 
+To generate a morph progression without SHINE equalization or sunglasses:
+
+```bash
+python stimulus_generation/create_morph_sequence.py \
+    --self    raw_faces/sub-001/self_raw.jpg \
+    --other   raw_faces/sub-001/other_raw.jpg \
+    --out     stimuli/morph_sequences/sub-001 \
+    --num-intermediates 5 \
+    --video \
+    --video-duration 3.0
+```
+
+The morph PNG sequence is intermediate-only: for `N` intermediates the alphas
+are `i / (N + 1)`, excluding alpha 0 and 1. The aligned/masked endpoints are
+saved separately as `self.png` and `other.png`, and the optional video plays
+self, intermediates, then other.
+
 ---
 
 ## GUI (Streamlit)
@@ -246,6 +263,7 @@ Individual suites:
 python -m pytest tests/test_shine.py -v
 python -m pytest tests/test_align.py -v
 python -m pytest tests/test_morph.py -v
+python -m pytest tests/test_morph_sequence.py -v
 ```
 
 ---
@@ -255,6 +273,7 @@ python -m pytest tests/test_morph.py -v
 ```
 stimulus_generation/
 ├── create_face_stimuli.py   # CLI entry point
+├── create_morph_sequence.py # Morph progression CLI
 ├── config.yaml              # defaults (overridden by CLI flags)
 ├── requirements.txt
 ├── README.md
@@ -271,7 +290,8 @@ stimulus_generation/
 ├── tests/
 │   ├── test_shine.py
 │   ├── test_align.py
-│   └── test_morph.py
+│   ├── test_morph.py
+│   └── test_morph_sequence.py
 ├── raw_faces/               # place input JPEGs here
 ├── outputs/                 # generated outputs
 └── reference_stimuli/       # optional: original stimuli for validation
